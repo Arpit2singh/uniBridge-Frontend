@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Unibridge Agent — Chat UI</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#98a0b3; --accent:#6ee7b7; --glass: rgba(255,255,255,0.03);
+      --radius:14px; --gap:14px; --maxw:1100px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; min-height:100vh; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071124 0%, #061021 100%); color:#e6eef8; display:flex; align-items:center; justify-content:center; padding:28px}
+
+    .app{width:100%; max-width:var(--maxw); display:grid; grid-template-columns:320px 1fr; gap:var(--gap)}
+
+    /* left sidebar */
+    .side{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:var(--radius); padding:20px; box-shadow:0 6px 30px rgba(2,6,23,0.7)}
+    .brand{display:flex; gap:12px; align-items:center}
+    .logo{width:46px; height:46px; border-radius:10px; background:linear-gradient(135deg,var(--accent), #4fd1c5); display:flex; align-items:center; justify-content:center; color:#052018; font-weight:700}
+    h1{font-size:18px; margin:8px 0 2px}
+    p.lead{margin:0; color:var(--muted); font-size:13px}
+
+    .what{margin-top:18px}
+    .what h3{margin:0 0 8px; font-size:13px}
+    .cap{background:var(--glass); padding:12px; border-radius:10px; margin-bottom:10px; color:var(--muted); font-size:13px}
+    .cap strong{color:#e6f7ef}
+
+    .info{margin-top:12px; font-size:13px; color:var(--muted)}
+    .small{font-size:12px; color:#98a0b3}
+
+    /* chat card */
+    .chatcard{background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01)); border-radius:var(--radius); padding:16px; display:flex; flex-direction:column; height:72vh; box-shadow:0 6px 30px rgba(2,6,23,0.7)}
+
+    /* conversation area */
+    .history{flex:1; overflow:auto; padding:8px; display:flex; flex-direction:column; gap:12px}
+    .msg{max-width:78%; padding:12px 14px; border-radius:12px; line-height:1.45}
+    .msg.user{align-self:flex-end; background:linear-gradient(90deg,#0b1220,#071427); border:1px solid rgba(255,255,255,0.02)}
+    .msg.agent{align-self:flex-start; background:linear-gradient(90deg, rgba(110,231,183,0.08), rgba(110,231,183,0.02)); color:#dff7ef; border:1px solid rgba(110,231,183,0.06)}
+    .meta{font-size:11px; color:var(--muted); margin-top:6px}
+
+    /* input area */
+    .composer{display:flex; gap:10px; padding-top:12px; align-items:center}
+    .input{flex:1; display:flex; gap:8px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:12px}
+    textarea{width:100%; min-height:44px; max-height:140px; resize:none; background:transparent; border:0; outline:0; color:inherit; font-size:14px}
+    button.send{background:linear-gradient(90deg,var(--accent), #34d399); border:0; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600}
+    button.send:disabled{opacity:0.6; cursor:not-allowed}
+
+    .topbar{display:flex; justify-content:space-between; align-items:center; gap:12px}
+    .status{font-size:13px; color:var(--muted)}
+
+    /* query type selection */
+    .query-types{display:flex; gap:10px; margin-bottom:12px;}
+    .query-types button{background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1); color:#e6eef8; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:500;}
+    .query-types button.active{background:var(--accent); color:#052018; border-color:var(--accent);}
+
+    footer.note{font-size:12px; color:var(--muted); margin-top:10px}
+
+    /* small screens */
+    @media (max-width:880px){
+      .app{grid-template-columns:1fr;}
+      .side{order:2}
+      .chatcard{order:1; height:70vh}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="side">
+      <div class="brand">
+        <div class="logo">UB</div>
+        <div>
+          <h1>Unibridge Agent</h1>
+          <p class="lead">Smart assistant for summaries, reminders & general Q&A</p>
+        </div>
+      </div>
+
+      <div class="what">
+        <h3>What this agent can do</h3>
+        <div class="cap"><strong>Make summaries</strong><br/>Give concise summaries of long text (articles, notes, transcripts).</div>
+        <div class="cap"><strong>Set reminders</strong><br/>Parse tasks, dates, and email to schedule reminders.</div>
+        <div class="cap"><strong>Answer general queries</strong><br/>General knowledge, code help, and conversational replies.</div>
+      </div>
+
+      <div class="info">
+        <div class="small">How to use</div>
+        <ul style="padding-left:16px; margin-top:8px; color:var(--muted)">
+          <li>Type natural language: "Summarize: [text]"</li>
+          <li>To create reminder: "Remind me to call Ravi tomorrow 9am, email ravi@example.com"</li>
+          <li>General question: Ask directly, e.g. "What's Node fetch usage?"</li>
+        </ul>
+
+        <div style="margin-top:12px" class="small">Backend endpoint</div>
+        <div class="cap">Set <code>API_BASE</code> in the JS to point to your backend (e.g. <em>https://your-server.com</em>)</div>
+
+        <footer class="note">Tip: This is a simple demo UI — messages are separated internally by type.</footer>
+      </div>
+    </aside>
+
+    <main class="chatcard">
+      <div class="topbar">
+        <div>
+          <strong>Chat</strong>
+          <div class="status" id="status">Not connected</div>
+        </div>
+        <div class="small" id="sessionId">session: —</div>
+      </div>
+
+      <div class="query-types"> 
+        <button id="btnNormal" class="active">Normal</button>
+        <button id="btnRemainder">Reminder</button>
+        <button id="btnSummary">Summary</button>
+      </div>
+
+      <div class="history" id="history" aria-live="polite"></div>
+
+      <div id="normalHistory" style="display:none;"></div>
+      <div id="remainderHistory" style="display:none;"></div>
+      <div id="summaryHistory" style="display:none;"></div>
+
+      <div class="composer">
+        <div class="input">
+          <textarea id="message" placeholder="Ask me to summarize, set a reminder, or ask anything... (Shift+Enter for newline)"></textarea>
+        </div>
+        <div>
+          <button class="send" id="sendBtn">Send</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const API_BASE = ''; // set your backend base URL
+    const SESSION_ENDPOINT = API_BASE ? `${API_BASE}/sessions` : '/sessions';
+    const RUN_ENDPOINT = API_BASE ? `${API_BASE}/run` : '/run';
+    
+    // API base URL for the new endpoints
+    const NEW_API_BASE_URL = "http://localhost:3000/api1/v1/UniBridge";
+
+    const historyEl = document.getElementById('history');
+    const statusEl = document.getElementById('status');
+    const sessionEl = document.getElementById('sessionId');
+    const messageEl = document.getElementById('message');
+    const sendBtn = document.getElementById('sendBtn');
+    const btnNormal = document.getElementById('btnNormal');
+    const btnRemainder = document.getElementById('btnRemainder');
+    const btnSummary = document.getElementById('btnSummary');
+    const queryButtons = [btnNormal, btnRemainder, btnSummary];
+
+    let sessionId = null;
+    let currentSection = 'normal';
+
+    function escapeHtml(s){
+      return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+    }
+
+    function pushMessage(text, who='agent'){
+      const div = document.createElement('div');
+      div.className = 'msg ' + (who === 'user' ? 'user' : 'agent');
+      div.innerHTML = `<div>${escapeHtml(text)}</div>` + (who === 'user' ? '<div class="meta">You</div>' : '<div class="meta">Agent</div>');
+
+      // append to visible chat area
+      historyEl.appendChild(div);
+      historyEl.scrollTop = historyEl.scrollHeight;
+
+      // also store in separate hidden section
+      const sectionEl = document.getElementById(currentSection + 'History');
+      sectionEl.appendChild(div.cloneNode(true));
+    }
+
+    function setStatus(text){ statusEl.textContent = text }
+
+    async function createSession(){
+      setStatus('Creating session...');
+      try{
+        const res = await fetch(SESSION_ENDPOINT, { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ appName: 'manager', userId: 'web-client' }) });
+        const txt = await res.text();
+        try{ const json = JSON.parse(txt); sessionId = json.session || json.sessionId || json.id || null; } catch(e){ sessionId = txt || null }
+        sessionEl.textContent = 'session: ' + (sessionId || '—');
+        setStatus(res.ok ? 'Ready' : 'Warning: session endpoint returned ' + res.status);
+      }catch(err){
+        console.error('Session creation failed', err);
+        sessionId = null;
+        sessionEl.textContent = 'session: —';
+        setStatus('Offline (session failed)');
+      }
+    }
+
+    async function sendMessage(){
+      const text = messageEl.value.trim();
+      if (!text) return;
+      pushMessage(text, 'user');
+      messageEl.value = '';
+      sendBtn.disabled = true;
+      setStatus('Thinking...');
+
+      try {
+        const activeBtn = document.querySelector('.query-types button.active');
+        let endpoint = '';
+        let payload = {
+            appName: 'manager',
+            userId: 'web-client',
+            sessionId: sessionId || null,
+            newMessage: { parts:[{ text }], role: 'user' },
+            streaming: false
+        };
+
+        if (activeBtn.id === 'btnNormal') {
+          endpoint = RUN_ENDPOINT;
+        } else if (activeBtn.id === 'btnRemainder') {
+          endpoint = `${NEW_API_BASE_URL}/remainderAgent`;
+          // Customize payload for your specific remainder endpoint if needed
+          payload = { question: text };
+        } else if (activeBtn.id === 'btnSummary') {
+          endpoint = `${NEW_API_BASE_URL}/summarytaker`;
+          // Customize payload for your specific summary endpoint if needed
+          payload = { question: text };
+        } else {
+          throw new Error("Invalid query type selected.");
+        }
+
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(`Failed to get a response from the server: ${JSON.stringify(errorData)}`);
+        }
+
+        const data = await res.json();
+        pushMessage(JSON.stringify(data), 'agent'); // Display the response
+        setStatus('Ready');
+
+      } catch (error) {
+        console.error("An error occurred:", error);
+        pushMessage('❌ Failed to reach agent. Check console for details.','agent');
+        setStatus('Error');
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+
+    function switchSection(section){
+      // Clear visible history
+      historyEl.innerHTML = '';
+      // Update active button
+      queryButtons.forEach(btn => btn.classList.remove('active'));
+      document.getElementById('btn' + section.charAt(0).toUpperCase() + section.slice(1)).classList.add('active');
+      // Show the content of the new section
+      const newHistoryEl = document.getElementById(section + 'History');
+      Array.from(newHistoryEl.children).forEach(msg => historyEl.appendChild(msg.cloneNode(true)));
+      historyEl.scrollTop = historyEl.scrollHeight;
+
+      // Update the current section
+      currentSection = section;
+    }
+
+    // Event listeners
+    sendBtn.addEventListener('click', sendMessage);
+    messageEl.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+    });
+
+    btnNormal.addEventListener('click', () => switchSection('normal'));
+    btnRemainder.addEventListener('click', () => switchSection('remainder'));
+    btnSummary.addEventListener('click', () => switchSection('summary'));
+
+    // create session on load
+    createSession();
+  </script>
+</body>
+</html>
